@@ -1,38 +1,25 @@
 <?php declare(strict_types=1);
 
-namespace ElasticScoutDriver\Tests\Integration\Engine;
+namespace Elastic\ScoutDriver\Tests\Integration\Engine;
 
-use ElasticAdapter\Documents\DocumentManager;
-use ElasticAdapter\Indices\IndexManager;
-use ElasticAdapter\Search\Hit;
-use ElasticAdapter\Search\SearchRequest;
-use ElasticScoutDriver\Engine;
-use ElasticScoutDriver\Factories\DocumentFactoryInterface;
-use ElasticScoutDriver\Factories\ModelFactoryInterface;
-use ElasticScoutDriver\Factories\SearchRequestFactoryInterface;
-use ElasticScoutDriver\Tests\App\Client;
-use ElasticScoutDriver\Tests\Integration\TestCase;
-use stdClass;
+use Elastic\Adapter\Documents\DocumentManager;
+use Elastic\Adapter\Indices\IndexManager;
+use Elastic\ScoutDriver\Engine;
+use Elastic\ScoutDriver\Factories\DocumentFactoryInterface;
+use Elastic\ScoutDriver\Factories\ModelFactoryInterface;
+use Elastic\ScoutDriver\Factories\SearchParametersFactoryInterface;
+use Elastic\ScoutDriver\Tests\App\Client;
+use Elastic\ScoutDriver\Tests\Integration\TestCase;
 
 /**
- * @covers \ElasticScoutDriver\Engine
+ * @covers \Elastic\ScoutDriver\Engine
  *
- * @uses   \ElasticScoutDriver\Factories\DocumentFactory
+ * @uses   \Elastic\ScoutDriver\Factories\DocumentFactory
+ * @uses   \Elastic\ScoutDriver\Factories\ModelFactory
+ * @uses   \Elastic\ScoutDriver\Factories\SearchParametersFactory
  */
 final class EngineUpdateTest extends TestCase
 {
-    /**
-     * @var DocumentManager
-     */
-    private $documentManager;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->documentManager = resolve(DocumentManager::class);
-    }
-
     public function test_empty_model_collection_can_not_be_indexed(): void
     {
         $documentManager = $this->createMock(DocumentManager::class);
@@ -41,7 +28,7 @@ final class EngineUpdateTest extends TestCase
         $engine = new Engine(
             $documentManager,
             resolve(DocumentFactoryInterface::class),
-            resolve(SearchRequestFactoryInterface::class),
+            resolve(SearchParametersFactoryInterface::class),
             resolve(ModelFactoryInterface::class),
             resolve(IndexManager::class)
         );
@@ -51,40 +38,12 @@ final class EngineUpdateTest extends TestCase
 
     public function test_not_empty_model_collection_can_be_indexed(): void
     {
-        $clients = factory(Client::class, rand(2, 10))->create();
+        $source = factory(Client::class, rand(2, 10))->create();
+        $found = Client::search()->get();
 
-        $searchResponse = $this->documentManager->search(
-            $clients->first()->searchableAs(),
-            new SearchRequest(['match_all' => new stdClass()])
-        );
-
-        // assert that the amount of created models corresponds number of found documents
-        $this->assertSame($clients->count(), $searchResponse->total());
-
-        // assert that the same model ids are in the index
-        $clientIds = $clients->pluck($clients->first()->getKeyName())->all();
-
-        $documentIds = $searchResponse->hits()->map(static function (Hit $hit) {
-            return $hit->document()->id();
-        })->all();
-
-        $this->assertEquals($clientIds, $documentIds);
-    }
-
-    public function test_metadata_is_indexed_when_soft_deletes_are_enabled(): void
-    {
-        // enable soft deletes
-        $this->app['config']->set('scout.soft_delete', true);
-
-        $clients = factory(Client::class, rand(2, 10))->create();
-
-        $searchResponse = $this->documentManager->search(
-            $clients->first()->searchableAs(),
-            new SearchRequest(['match_all' => new stdClass()])
-        );
-
-        $searchResponse->hits()->each(function (Hit $hit) {
-            $this->assertSame(0, $hit->document()->content('__soft_deleted'));
-        });
+        // assert that the amount of created models corresponds number of found models
+        $this->assertSame($source->count(), $found->count());
+        // assert that all source models are found
+        $this->assertCount(0, $source->pluck('id')->diff($found->pluck('id')));
     }
 }
