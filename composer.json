@@ -1,5 +1,5 @@
 {
-    "name": "babenkoivan/elastic-scout-driver",
+    "name": "aman-rawat/elastic-scout-driver",
     "description": "Elasticsearch driver for Laravel Scout",
     "keywords": [
         "scout",
@@ -13,18 +13,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Ivan Babenko",
-            "email": "babenko.i.a@gmail.com"
-        }
-    ],
-    "funding": [
-        {
-            "type": "ko-fi",
-            "url": "https://ko-fi.com/ivanbabenko"
-        },
-        {
-            "type": "paypal",
-            "url": "https://paypal.me/babenkoi"
+            "name": "Aman Rawat",
+            "email": "amanrwt99@gmail.com"
         }
     ],
     "autoload": {
