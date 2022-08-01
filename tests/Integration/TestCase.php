@@ -1,18 +1,15 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver\Tests\Integration;
+namespace ElasticScoutDriver\Tests\Integration;
 
-use Elastic\Client\ServiceProvider as ElasticClientServiceProvider;
-use Elastic\Migrations\ServiceProvider as ElasticMigrationsServiceProvider;
-use Elastic\ScoutDriver\ServiceProvider as ElasticScoutDriverServiceProvider;
-use Illuminate\Config\Repository;
+use ElasticClient\ServiceProvider as ElasticClientServiceProvider;
+use ElasticMigrations\ServiceProvider as ElasticMigrationsServiceProvider;
+use ElasticScoutDriver\ServiceProvider as ElasticScoutDriverServiceProvider;
 use Laravel\Scout\ScoutServiceProvider;
 use Orchestra\Testbench\TestCase as TestbenchTestCase;
 
 class TestCase extends TestbenchTestCase
 {
-    protected Repository $config;
-
     protected function getPackageProviders($app)
     {
         return [
@@ -27,10 +24,9 @@ class TestCase extends TestbenchTestCase
     {
         parent::getEnvironmentSetUp($app);
 
-        $this->config = $app['config'];
-        $this->config->set('scout.driver', 'elastic');
-        $this->config->set('elastic.migrations.storage.default_path', dirname(__DIR__) . '/App/elastic/migrations');
-        $this->config->set('elastic.scout_driver.refresh_documents', true);
+        $app['config']->set('scout.driver', 'elastic');
+        $app['config']->set('elastic.migrations.storage_directory', dirname(__DIR__) . '/App/elastic/migrations');
+        $app['config']->set('elastic.scout_driver.refresh_documents', true);
     }
 
     protected function setUp(): void

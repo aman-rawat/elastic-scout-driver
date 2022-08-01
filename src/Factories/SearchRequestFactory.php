@@ -1,41 +1,30 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver\Factories;
+namespace ElasticScoutDriver\Factories;
 
-use Elastic\Adapter\Search\SearchParameters;
+use ElasticAdapter\Search\SearchRequest;
 use Laravel\Scout\Builder;
 use stdClass;
 
-class SearchParametersFactory implements SearchParametersFactoryInterface
+class SearchRequestFactory implements SearchRequestFactoryInterface
 {
-    public function makeFromBuilder(Builder $builder, array $options = []): SearchParameters
+    public function makeFromBuilder(Builder $builder, array $options = []): SearchRequest
     {
-        $searchParameters = new SearchParameters();
-
-        $index = $this->makeIndex($builder);
-        $searchParameters->indices([$index]);
-
-        $query = $this->makeQuery($builder);
-        $searchParameters->query($query);
+        $searchRequest = new SearchRequest($this->makeQuery($builder));
 
         if ($sort = $this->makeSort($builder)) {
-            $searchParameters->sort($sort);
+            $searchRequest->sort($sort);
         }
 
         if ($from = $this->makeFrom($options)) {
-            $searchParameters->from($from);
+            $searchRequest->from($from);
         }
 
         if ($size = $this->makeSize($builder, $options)) {
-            $searchParameters->size($size);
+            $searchRequest->size($size);
         }
 
-        return $searchParameters;
-    }
-
-    protected function makeIndex(Builder $builder): string
-    {
-        return $builder->index ?: $builder->model->searchableAs();
+        return $searchRequest;
     }
 
     protected function makeQuery(Builder $builder): array
@@ -65,33 +54,37 @@ class SearchParametersFactory implements SearchParametersFactoryInterface
 
     protected function makeFilter(Builder $builder): ?array
     {
-        $filter = collect($builder->wheres)->map(static fn ($value, string $field) => [
-            'term' => [$field => $value],
-        ])->values();
+        $wheres = collect($builder->wheres)->map(static function ($value, string $field) {
+            return [
+                'term' => [$field => $value],
+            ];
+        })->values();
 
-        if (property_exists($builder, 'whereIns')) {
-            $whereIns = collect($builder->whereIns)->map(static fn (array $values, string $field) => [
+        $whereIns = collect($builder->whereIns ?? [])->map(static function (array $values, string $field) {
+            return [
                 'terms' => [$field => $values],
-            ])->values();
+            ];
+        })->values();
 
-            $filter = $filter->merge($whereIns);
-        }
+        $filter = $wheres->merge($whereIns);
 
         return $filter->isEmpty() ? null : $filter->all();
     }
 
     protected function makeSort(Builder $builder): ?array
     {
-        $sort = collect($builder->orders)->map(static fn (array $order) => [
-            $order['column'] => $order['direction'],
-        ]);
+        $sort = collect($builder->orders)->map(static function (array $order) {
+            return [
+                $order['column'] => $order['direction'],
+            ];
+        });
 
         return $sort->isEmpty() ? null : $sort->all();
     }
 
     protected function makeFrom(array $options): ?int
     {
-        if (isset($options['page'], $options['perPage'])) {
+        if (isset($options['page']) && isset($options['perPage'])) {
             return ($options['page'] - 1) * $options['perPage'];
         }
 

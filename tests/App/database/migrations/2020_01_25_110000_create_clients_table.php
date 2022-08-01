@@ -6,7 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateClientsTable extends Migration
 {
-    public function up(): void
+    /**
+     * @return void
+     */
+    public function up()
     {
         Schema::create('clients', static function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -18,7 +21,10 @@ class CreateClientsTable extends Migration
         });
     }
 
-    public function down(): void
+    /**
+     * @return void
+     */
+    public function down()
     {
         Schema::dropIfExists('clients');
     }

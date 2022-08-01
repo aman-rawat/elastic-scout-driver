@@ -1,28 +1,35 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver;
+namespace ElasticScoutDriver;
 
-use Elastic\ScoutDriver\Factories\DocumentFactory;
-use Elastic\ScoutDriver\Factories\DocumentFactoryInterface;
-use Elastic\ScoutDriver\Factories\ModelFactory;
-use Elastic\ScoutDriver\Factories\ModelFactoryInterface;
-use Elastic\ScoutDriver\Factories\SearchParametersFactory;
-use Elastic\ScoutDriver\Factories\SearchParametersFactoryInterface;
-use Illuminate\Contracts\Foundation\Application;
+use ElasticScoutDriver\Factories\DocumentFactory;
+use ElasticScoutDriver\Factories\DocumentFactoryInterface;
+use ElasticScoutDriver\Factories\ModelFactory;
+use ElasticScoutDriver\Factories\ModelFactoryInterface;
+use ElasticScoutDriver\Factories\SearchRequestFactory;
+use ElasticScoutDriver\Factories\SearchRequestFactoryInterface;
 use Illuminate\Support\ServiceProvider as AbstractServiceProvider;
 use Laravel\Scout\EngineManager;
 
 final class ServiceProvider extends AbstractServiceProvider
 {
-    private string $configPath;
-
-    private array $weakBindings = [
+    /**
+     * @var string
+     */
+    private $configPath;
+    /**
+     * @var array
+     */
+    private $weakBindings = [
         ModelFactoryInterface::class => ModelFactory::class,
         DocumentFactoryInterface::class => DocumentFactory::class,
-        SearchParametersFactoryInterface::class => SearchParametersFactory::class,
+        SearchRequestFactoryInterface::class => SearchRequestFactory::class,
     ];
 
-    public function __construct(Application $app)
+    /**
+     * {@inheritDoc}
+     */
+    public function __construct($app)
     {
         parent::__construct($app);
 
@@ -30,7 +37,7 @@ final class ServiceProvider extends AbstractServiceProvider
     }
 
     /**
-     * @return void
+     * {@inheritDoc}
      */
     public function register()
     {
@@ -53,6 +60,8 @@ final class ServiceProvider extends AbstractServiceProvider
             $this->configPath => config_path(basename($this->configPath)),
         ]);
 
-        resolve(EngineManager::class)->extend('elastic', static fn () => resolve(Engine::class));
+        resolve(EngineManager::class)->extend('elastic', static function () {
+            return resolve(Engine::class);
+        });
     }
 }

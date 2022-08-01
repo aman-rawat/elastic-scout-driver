@@ -34,9 +34,9 @@ Elasticsearch driver for Laravel Scout.
 
 The current version of Elastic Scout Driver has been tested with the following configuration:
 
-* PHP 7.4-8.0
-* Elasticsearch 8.x
-* Laravel 7.x-9.x
+* PHP 7.3-8.0
+* Elasticsearch 7.x
+* Laravel 6.x-8.x
 * Laravel Scout 7.x-9.x
 
 ## Installation
@@ -70,15 +70,15 @@ If you want to use Elastic Scout Driver with [Lumen framework](https://lumen.lar
 
 ## Configuration
 
-Elastic Scout Driver uses [babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) as a dependency.
-To change the client settings you need to publish the configuration file first:
+Elastic Scout Driver uses [babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) as a dependency. 
+If you want to change the default client settings (and I'm pretty sure you do), then you need to create the configuration file first:
 
 ```bash
-php artisan vendor:publish --provider="Elastic\Client\ServiceProvider"
+php artisan vendor:publish --provider="ElasticClient\ServiceProvider"
 ```
 
-In the newly created `config/elastic.client.php` file you can define the default connection name using configuration hashes. 
-Please, refer to the [elastic-client documentation](https://github.com/babenkoivan/elastic-client) for more details.
+You can change Elasticsearch host and the other client settings in the `config/elastic.client.php` file. 
+Please refer to [babenkoivan/elastic-client](https://github.com/babenkoivan/elastic-client) for more details.
 
 Elastic Scout Driver itself has only one configuration option at the moment - `refresh_documents`. 
 If it's set to `true` (`false` by default) documents are indexed immediately, which might be handy for testing.   
@@ -86,7 +86,7 @@ If it's set to `true` (`false` by default) documents are indexed immediately, wh
 You can configure `refresh_documents` in the `config/elastic.scout_driver.php` file after publishing it with the following command:
 
 ```bash
-php artisan vendor:publish --provider="Elastic\ScoutDriver\ServiceProvider"
+php artisan vendor:publish --provider="ElasticScoutDriver\ServiceProvider"
 ``` 
 
 At last, do not forget, that with Scout you can configure the searchable data, the model id and the index name.
@@ -139,9 +139,9 @@ public function shouldBeSearchable()
     return count($this->toSearchableArray()) > 0;
 }
 ```
-* Raw search returns an instance of `SearchResult` class (see [Elastic Adapter](https://github.com/babenkoivan/elastic-adapter#search)):
+* Raw search returns an instance of `SearchResponse` class (see [Elastic Adapter](https://github.com/babenkoivan/elastic-adapter#search)):
 ```php
-$searchResult = App\Order::search('Star Trek')->raw();
+$searchResponse = App\Order::search('Star Trek')->raw();
 ``` 
 * To be compatible with other drivers and to not expose internal implementation of the engine, Elastic driver ignores callback
 parameter of the `search` method:

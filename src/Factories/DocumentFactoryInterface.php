@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver\Factories;
+namespace ElasticScoutDriver\Factories;
 
 use Illuminate\Support\Collection;
 

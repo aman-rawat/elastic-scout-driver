@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver\Factories;
+namespace ElasticScoutDriver\Factories;
 
-use Elastic\Adapter\Documents\Document;
+use ElasticAdapter\Documents\Document;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -14,8 +14,8 @@ class DocumentFactory implements DocumentFactoryInterface
     {
         return $models->map(static function (Model $model) {
             if (
-                config('scout.soft_delete', false) &&
-                in_array(SoftDeletes::class, class_uses_recursive(get_class($model)), true)
+                in_array(SoftDeletes::class, class_uses_recursive(get_class($model))) &&
+                config('scout.soft_delete', false)
             ) {
                 $model->pushSoftDeleteMetadata();
             }

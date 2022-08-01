@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 
-namespace Elastic\ScoutDriver\Tests\Integration\Engine;
+namespace ElasticScoutDriver\Tests\Integration\Engine;
 
-use Elastic\Adapter\Search\SearchResult;
-use Elastic\ScoutDriver\Tests\App\Client;
-use Elastic\ScoutDriver\Tests\Integration\TestCase;
+use ElasticAdapter\Search\SearchResponse;
+use ElasticScoutDriver\Tests\App\Client;
+use ElasticScoutDriver\Tests\Integration\TestCase;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Laravel\Scout\Builder;
-use Throwable;
 
 /**
- * @covers \Elastic\ScoutDriver\Engine
+ * @covers \ElasticScoutDriver\Engine
  *
- * @uses   \Elastic\ScoutDriver\Factories\DocumentFactory
- * @uses   \Elastic\ScoutDriver\Factories\ModelFactory
- * @uses   \Elastic\ScoutDriver\Factories\SearchParametersFactory
+ * @uses   \ElasticScoutDriver\Factories\DocumentFactory
+ * @uses   \ElasticScoutDriver\Factories\ModelFactory
+ * @uses   \ElasticScoutDriver\Factories\SearchRequestFactory
  */
 final class EngineSearchTest extends TestCase
 {
@@ -80,7 +80,7 @@ final class EngineSearchTest extends TestCase
     public function test_search_result_can_be_sorted(): void
     {
         $source = factory(Client::class, rand(2, 10))->create()->sortBy('email')->values();
-        $found = Client::search()->orderBy('email')->get();
+        $found = Client::search()->orderBy('email', 'asc')->get();
 
         $this->assertEquals($source->toArray(), $found->toArray());
     }
@@ -106,7 +106,7 @@ final class EngineSearchTest extends TestCase
 
         /** @var LengthAwarePaginator $paginator */
         $paginator = Client::search($target->first()->name)
-            ->orderBy('phone_number')
+            ->orderBy('phone_number', 'asc')
             ->paginate(2, 'p', 3);
 
         $this->assertSame(2, $paginator->perPage());
@@ -117,19 +117,19 @@ final class EngineSearchTest extends TestCase
         $this->assertEquals($target->last()->toArray(), $paginator[0]->toArray());
     }
 
-    public function test_raw_search_returns_instance_of_search_result(): void
+    public function test_raw_search_returns_instance_of_search_response(): void
     {
         $source = factory(Client::class, rand(2, 10))->create();
         $foundRaw = Client::search()->raw();
 
-        $this->assertInstanceOf(SearchResult::class, $foundRaw);
+        $this->assertInstanceOf(SearchResponse::class, $foundRaw);
         $this->assertSame($source->count(), $foundRaw->total());
     }
 
     public function test_soft_deleted_models_are_not_included_in_search_result(): void
     {
         // enable soft deletes
-        $this->config->set('scout.soft_delete', true);
+        $this->app['config']->set('scout.soft_delete', true);
 
         factory(Client::class, rand(2, 10))->create(['deleted_at' => now()]);
 
@@ -151,15 +151,15 @@ final class EngineSearchTest extends TestCase
 
     public function test_search_with_custom_index(): void
     {
-        $this->expectException(Throwable::class);
+        $this->expectException(Missing404Exception::class);
 
-        Client::search()->within('non_existing_index')->get();
+        Client::search()->within('missing_index')->get();
     }
 
     public function test_paginate_search_with_custom_index(): void
     {
-        $this->expectException(Throwable::class);
+        $this->expectException(Missing404Exception::class);
 
-        Client::search()->within('non_existing_index')->paginate();
+        Client::search()->within('missing_index')->paginate();
     }
 }
